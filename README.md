@@ -1,7 +1,7 @@
 # 신호등 시스템 회로 및 코드 설명
 
 ## 0. 유튜브 동작 영상
-
+https://youtu.be/aK3FVobjxvE?si=4kAf5xY62c8oBQFf
 
 ## 1. 개요
 
