@@ -11,6 +11,7 @@ p5.js를 통해 LED 상태와 모드전환을 제어.
 ## 2. 회로 구성
 다음은 Arduino와 연결된 신호등 시스템의 회로 구성도입니다.
 ![image](https://github.com/user-attachments/assets/0bb31a83-2848-43df-9ad3-0dc18720c3f1)
+
 ![image](https://github.com/user-attachments/assets/0734a13d-ee7f-4e89-b45e-8dec34cafe72)
 
 ### 2-1. 부품 목록
@@ -63,3 +64,7 @@ p5.js를 통해 LED 상태와 모드전환을 제어.
    - 위의 회로 구성도를 참고하여 배선을 완료합니다.
 5. **작동 확인**
    - 버튼을 눌러 모드를 변경하고, 가변저항을 조절하여 LED 밝기 확인
+  
+## 5. p5
+![image](https://github.com/user-attachments/assets/39df7c93-a81f-4624-a92e-884b36e0b6e3)
+
