@@ -73,12 +73,16 @@ p5.js를 통해 LED 상태와 모드전환을 제어.
   
 ## 5. p5.js
 1. Normal Mode
+   
 ![image](https://github.com/user-attachments/assets/9b15d050-2bf1-4f00-9a6a-47e9691703f9)
 2. Emergency Mode
+
 ![image](https://github.com/user-attachments/assets/e8b574ab-611c-4e57-b1e0-cb8dff2c4ade)
 3. Blink Mode
+
 ![image](https://github.com/user-attachments/assets/0f1c09be-a1f5-4b76-bbde-fb337a290295)
 4. On/Off Mode
+
 ![image](https://github.com/user-attachments/assets/a743e8a2-453d-4794-8cf3-27feedf20652)
 
 
