@@ -1,47 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Traffic Light Controller</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.5.0/p5.min.js"></script>
-    <script src="sketch.js" defer></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        .container {
-            margin-top: 20px;
-        }
-        canvas {
-            display: block;
-            margin: auto;
-        }
-        .light {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: inline-block;
-            margin: 10px;
-            background-color: gray;
-        }
-    </style>
-</head>
-<body>
-    <h1>Traffic Light Controller</h1>
-    <div class="container">
-        <h2>Brightness: <span id="brightnessValue">255</span></h2>
-        <h2>Mode: <span id="modeIndicator">Normal</span></h2>
-        <div>
-            <div class="light" id="redLight"></div>
-            <div class="light" id="yellowLight"></div>
-            <div class="light" id="greenLight"></div>
-        </div>
-        <h3>Signal Timings (ms)</h3>
-        <label>Red Duration: <input type="range" id="redDuration" min="500" max="5000" value="2000"></label>
-        <label>Yellow Duration: <input type="range" id="yellowDuration" min="200" max="2000" value="500"></label>
-        <label>Green Duration: <input type="range" id="greenDuration" min="500" max="5000" value="2000"></label>
-    </div>
-</body>
+
+    <title>Sketch</title>
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <script src="libraries/p5.min.js"></script>
+    <script src="libraries/p5.sound.min.js"></script>
+    <script src="libraries/p5.webserial.js"></script>
+    
+  </head>
+
+  <body>
+    <script src="sketch.js"></script>
+  </body>
 </html>

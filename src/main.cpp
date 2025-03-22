@@ -2,7 +2,7 @@
 #include <TaskScheduler.h>
 #include <PinChangeInterrupt.h>
 
-// 핀 정의 (LED, 버튼, 가변저항항)
+// 핀 정의 (LED, 버튼, 가변저항)
 #define RED_LED 5
 #define YELLOW_LED 6
 #define GREEN_LED 7
@@ -12,46 +12,45 @@
 #define POTENTIOMETER A0
 
 // 모드 및 밝기 변수
-bool redMode = false;     // 빨간불 모드
-bool blinkMode = false;   // 모든 LED 깜빡임 모드
-bool normalMode = true;   // 정상 신호등 모드
-bool toggleMode = false;  // 수동 모드 여부
-int brightness = 255;     // LED 밝기 값 (0 ~ 255)
+bool emergencyMode = false;
+bool blinkMode = false;
+bool normalMode = true;
+bool toggleMode = false;
+int brightness = 255;
 
-// 버튼 입력 플래그 (인터럽트용)
+// 신호등 지속 시간 변수
+int redDuration = 2000;
+int yellowDuration = 500;
+int greenDuration = 2000;
+
+// 버튼 입력 플래그
 volatile bool button1Pressed = false;
 volatile bool button2Pressed = false;
 volatile bool button3Pressed = false;
 
-// TaskScheduler 초기화
 Scheduler runner;
 
-// 가변저항을 읽어 LED 밝기 조절
 void updateBrightness() {
     brightness = map(analogRead(POTENTIOMETER), 0, 1023, 0, 255);
 }
 
-// Task 콜백 함수 선언
-void redModeTaskCallback();
+void emergencyModeTaskCallback();
 void blinkModeTaskCallback();
 void normalModeTaskCallback();
 
-// Task 정의 (각 모드별 실행할 함수)
 Task tUpdateBrightness(100, TASK_FOREVER, &updateBrightness);
-Task tRedMode(0, TASK_FOREVER, &redModeTaskCallback);
+Task tEmergencyMode(0, TASK_FOREVER, &emergencyModeTaskCallback);
 Task tBlinkMode(500, TASK_FOREVER, &blinkModeTaskCallback);
 Task tNormalMode(0, TASK_FOREVER, &normalModeTaskCallback);
 
-// 빨간불 모드 실행 함수
-void redModeTaskCallback() {
-    if (redMode) {
+void emergencyModeTaskCallback() {
+    if (emergencyMode) {
         analogWrite(RED_LED, brightness);
         digitalWrite(YELLOW_LED, LOW);
         digitalWrite(GREEN_LED, LOW);
     }
 }
 
-// 모든 LED 깜빡임 모드 실행 함수
 bool blinkState = false;
 void blinkModeTaskCallback() {
     if (blinkMode) {
@@ -62,73 +61,157 @@ void blinkModeTaskCallback() {
     }
 }
 
-// 정상 신호등 모드 실행 함수
 int normalModeStep = 0;
 void normalModeTaskCallback() {
-    if (normalMode) {
-        switch (normalModeStep) {
-            case 0:
-                analogWrite(RED_LED, brightness); // 빨간불 2초
-                tNormalMode.setInterval(2000);
-                break;
-            case 1:
-                analogWrite(RED_LED, 0);
-                analogWrite(YELLOW_LED, brightness); // 노란불 0.5초
-                tNormalMode.setInterval(500);
-                break;
-            case 2:
-                analogWrite(YELLOW_LED, 0);
-                analogWrite(GREEN_LED, brightness); // 초록불 2초
-                tNormalMode.setInterval(2000);
-                break;
-            case 3:
-                analogWrite(GREEN_LED, 0); // 초록불 깜빡이기 (167ms 간격 -  1초에 3번)
-                tNormalMode.setInterval(167);
-                break;
-            case 4:
-                analogWrite(GREEN_LED, brightness);
-                tNormalMode.setInterval(167);
-                break;
-            case 5:
-                analogWrite(GREEN_LED, 0);
-                tNormalMode.setInterval(167);
-                break;
-            case 6:
-                analogWrite(GREEN_LED, brightness);
-                tNormalMode.setInterval(167);
-                break;
-            case 7:
-                analogWrite(GREEN_LED, 0);
-                tNormalMode.setInterval(167);
-                break;
-            case 8:
-                analogWrite(GREEN_LED, brightness);
-                tNormalMode.setInterval(167);
-                break;
-            case 9:
-                analogWrite(GREEN_LED, 0);
-                analogWrite(YELLOW_LED, brightness); // 노란불 0.5초
-                tNormalMode.setInterval(500);
-                break;
-            case 10:
-                analogWrite(YELLOW_LED, 0);
-                normalModeStep = -1; // 다시 빨간불 단계로 돌아감 (초기화)
-                break;
-        }
-        normalModeStep++;
+    if (!normalMode) return;
+    switch (normalModeStep) {
+        case 0:
+            analogWrite(RED_LED, brightness);
+            tNormalMode.setInterval(redDuration);
+            break;
+        case 1:
+            analogWrite(RED_LED, 0);
+            analogWrite(YELLOW_LED, brightness);
+            tNormalMode.setInterval(yellowDuration);
+            break;
+        case 2:
+            analogWrite(YELLOW_LED, 0);
+            analogWrite(GREEN_LED, brightness);
+            tNormalMode.setInterval(greenDuration);
+            break;
+        case 3:
+            analogWrite(GREEN_LED, 0);
+            tNormalMode.setInterval(167);
+            break;
+        case 4:
+            analogWrite(GREEN_LED, brightness);
+            tNormalMode.setInterval(167);
+            break;
+        case 5:
+            analogWrite(GREEN_LED, 0);
+            tNormalMode.setInterval(167);
+            break;
+        case 6:
+            analogWrite(GREEN_LED, brightness);
+            tNormalMode.setInterval(167);
+            break;
+        case 7:
+            analogWrite(GREEN_LED, 0);
+            tNormalMode.setInterval(167);
+            break;
+        case 8:
+            analogWrite(GREEN_LED, brightness);
+            tNormalMode.setInterval(167);
+            break;
+        case 9:
+            analogWrite(GREEN_LED, 0);
+            analogWrite(YELLOW_LED, brightness);
+            tNormalMode.setInterval(yellowDuration);
+            break;
+        case 10:
+            analogWrite(YELLOW_LED, 0);
+            normalModeStep = 0;
+            break;
     }
 }
 
-// 버튼 인터럽트 핸들러 (각 버튼이 눌리면 실행)
 void button1ISR() { button1Pressed = true; }
 void button2ISR() { button2Pressed = true; }
 void button3ISR() { button3Pressed = true; }
 
-void setup() {
-    // 시리얼 통신 시작
-    Serial.begin(9600);
+String serialInput = "";
 
-    // 핀 모드 설정
+void parseSerialCommand(String input);
+
+void handleSerialInput() {
+    while (Serial.available()) {
+        char c = Serial.read();
+        if (c == '\n') {
+            serialInput.trim();
+            if (serialInput.startsWith("cmd:")) {
+                parseSerialCommand(serialInput);
+            } else {
+                int spaceIdx = serialInput.indexOf(' ');
+                if (spaceIdx != -1) {
+                    String key = serialInput.substring(0, spaceIdx);
+                    String val = serialInput.substring(spaceIdx + 1);
+                    int timeVal = val.toInt();
+
+                    if (key == "RED") {
+                        redDuration = timeVal;
+                        if (normalMode && digitalRead(RED_LED)) {
+                            tNormalMode.setInterval(redDuration);
+                        }
+                    } else if (key == "YELLOW") {
+                        yellowDuration = timeVal;
+                        if (normalMode && digitalRead(YELLOW_LED)) {
+                            tNormalMode.setInterval(yellowDuration);
+                        }
+                    } else if (key == "GREEN") {
+                        greenDuration = timeVal;
+                        if (normalMode && digitalRead(GREEN_LED)) {
+                            tNormalMode.setInterval(greenDuration);
+                        }
+                    }
+                }
+            }
+            serialInput = "";
+        } else {
+            serialInput += c;
+        }
+    }
+}
+
+void parseSerialCommand(String input) {
+    input = input.substring(4);
+    int idx;
+    while ((idx = input.indexOf(";")) != -1) {
+        String token = input.substring(0, idx);
+        input = input.substring(idx + 1);
+        int eq = token.indexOf("=");
+        if (eq == -1) continue;
+        String key = token.substring(0, eq);
+        String val = token.substring(eq + 1);
+
+        if (key == "brightness") {
+            brightness = val.toInt();
+        } else if (key == "redTime") {
+            redDuration = val.toInt();
+            if (normalMode && digitalRead(RED_LED)) tNormalMode.setInterval(redDuration);
+        } else if (key == "yellowTime") {
+            yellowDuration = val.toInt();
+            if (normalMode && digitalRead(YELLOW_LED)) tNormalMode.setInterval(yellowDuration);
+        } else if (key == "greenTime") {
+            greenDuration = val.toInt();
+            if (normalMode && digitalRead(GREEN_LED)) tNormalMode.setInterval(greenDuration);
+        } else if (key == "button") {
+            int btn = val.toInt();
+            if (btn == 1) button1Pressed = true;
+            else if (btn == 2) button2Pressed = true;
+            else if (btn == 3) button3Pressed = true;
+        }
+    }
+}
+
+void sendStateToSerial() {
+    Serial.print("mode:");
+    if (emergencyMode) Serial.print("emergency");
+    else if (blinkMode) Serial.print("blink");
+    else if (normalMode) Serial.print("normal");
+    else Serial.print("On/Off");
+
+    Serial.print(",brightness:");
+    Serial.print(brightness);
+    Serial.print(",red:");
+    Serial.print(digitalRead(RED_LED));
+    Serial.print(",yellow:");
+    Serial.print(digitalRead(YELLOW_LED));
+    Serial.print(",green:");
+    Serial.println(digitalRead(GREEN_LED));
+}
+
+void setup() {
+    Serial.begin(9600);
     pinMode(RED_LED, OUTPUT);
     pinMode(YELLOW_LED, OUTPUT);
     pinMode(GREEN_LED, OUTPUT);
@@ -136,78 +219,53 @@ void setup() {
     pinMode(BUTTON2, INPUT_PULLUP);
     pinMode(BUTTON3, INPUT_PULLUP);
 
-    // 버튼 인터럽트 설정 (FALLING 시 버튼 입력 감지)
     attachPCINT(digitalPinToPCINT(BUTTON1), button1ISR, FALLING);
     attachPCINT(digitalPinToPCINT(BUTTON2), button2ISR, FALLING);
     attachPCINT(digitalPinToPCINT(BUTTON3), button3ISR, FALLING);
 
-    // TaskScheduler에 Task 추가
     runner.init();
     runner.addTask(tUpdateBrightness);
-    runner.addTask(tRedMode);
+    runner.addTask(tEmergencyMode);
     runner.addTask(tBlinkMode);
     runner.addTask(tNormalMode);
 
-    // 기본 동작 Task 실행
     tUpdateBrightness.enable();
-    tRedMode.enable();
+    tEmergencyMode.enable();
     tBlinkMode.disable();
     tNormalMode.enable();
 }
 
 void loop() {
+    handleSerialInput();
     runner.execute();
+    sendStateToSerial();
 
-    // 신호등 상태 출력
-    Serial.print("Mode: ");
-    if (redMode) Serial.print("Red");
-    else if (blinkMode) Serial.print("Blink");
-    else if (normalMode) Serial.print("Normal");
-    
-    Serial.print(", Brightness: ");
-    Serial.print(brightness);
-    
-    Serial.print(", Red: ");
-    Serial.print(digitalRead(RED_LED));
-    
-    Serial.print(", Yellow: ");
-    Serial.print(digitalRead(YELLOW_LED));
-    
-    Serial.print(", Green: ");
-    Serial.println(digitalRead(GREEN_LED));
-
-    delay(500); // 500ms마다 송신
-
-    // 1번 버튼: 빨간불 모드
     if (button1Pressed) {
         button1Pressed = false;
         toggleMode = !toggleMode;
-
         if (toggleMode) {
-            tRedMode.disable();
+            tEmergencyMode.disable();
             tBlinkMode.disable();
             tNormalMode.disable();
+            emergencyMode = true;
             analogWrite(RED_LED, brightness);
             analogWrite(YELLOW_LED, 0);
             analogWrite(GREEN_LED, 0);
-            Serial.println("Manual Mode: RED_ON, YELLOW_OFF, GREEN_OFF");
         } else {
+            emergencyMode = false;
             analogWrite(RED_LED, 0);
-            Serial.println("Manual Mode Off: RED_OFF");
             tNormalMode.enable();
         }
     }
 
-    // 2번 버튼: 모든 LED 깜빡임 모드
     if (button2Pressed) {
         button2Pressed = false;
         blinkMode = !blinkMode;
-        redMode = false;
+        emergencyMode = false;
         normalMode = !blinkMode;
-
         if (blinkMode) {
             tBlinkMode.enable();
-            tRedMode.disable();
+            tEmergencyMode.disable();
             tNormalMode.disable();
         } else {
             digitalWrite(RED_LED, LOW);
@@ -217,11 +275,9 @@ void loop() {
         }
     }
 
-    // 3번 버튼: 신호등 시스템 전체 ON/OFF
     if (button3Pressed) {
         button3Pressed = false;
         normalMode = !normalMode;
-
         if (normalMode) {
             tNormalMode.enable();
         } else {
